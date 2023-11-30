@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class TouchingDirections : MonoBehaviour
+public class TouchingDirections : NetworkBehaviour
 {
     // Rigidbody2D rb;
     public ContactFilter2D castFilter;
@@ -18,11 +19,14 @@ public class TouchingDirections : MonoBehaviour
 
     [SerializeField]
     private bool _isGrounded;
-    public bool IsGrounded {
-        get {
+    public bool IsGrounded
+    {
+        get
+        {
             return _isGrounded;
         }
-        private set {
+        private set
+        {
             _isGrounded = value;
             animator.SetBool(AnimationStrings.isGrounded, value);
         }
@@ -30,11 +34,14 @@ public class TouchingDirections : MonoBehaviour
 
     [SerializeField]
     private bool _isOnWall;
-    public bool IsOnWall {
-        get {
+    public bool IsOnWall
+    {
+        get
+        {
             return _isOnWall;
         }
-        private set {
+        private set
+        {
             _isOnWall = value;
             animator.SetBool(AnimationStrings.isOnWall, value);
         }
@@ -43,27 +50,48 @@ public class TouchingDirections : MonoBehaviour
     [SerializeField]
     private bool _isOnCeiling;
     private Vector2 wallCheckDirection => gameObject.transform.localScale.x > 0 ? Vector2.right : Vector2.left;
-    public bool IsOnCeiling {
-        get {
+    public bool IsOnCeiling
+    {
+        get
+        {
             return _isOnCeiling;
         }
-        private set {
+        private set
+        {
             _isOnCeiling = value;
             animator.SetBool(AnimationStrings.isOnCeiling, value);
         }
     }
 
-    private void Awake() {
+    private void Awake()
+    {
         // rb = GetComponent<Rigidbody2D>();
+
+
+
+
+
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
         touchingCol = GetComponent<CapsuleCollider2D>();
         animator = GetComponent<Animator>();
+
+
     }
 
 
-    private void FixedUpdate() {
+    private void FixedUpdate()
+    {
 
         IsGrounded = touchingCol.Cast(Vector2.down, castFilter, groundHits, groundDistance) > 0;
         IsOnWall = touchingCol.Cast(wallCheckDirection, castFilter, wallHits, wallDistance) > 0;
         IsOnCeiling = touchingCol.Cast(Vector2.up, castFilter, ceilingHits, ceilingDistance) > 0;
+
+
+
     }
 }

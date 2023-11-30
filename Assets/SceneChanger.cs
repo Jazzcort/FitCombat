@@ -26,6 +26,7 @@ public class SceneChanger : MonoBehaviour
 
     public static void host() {
         choice = 1;
+        
         goToGameScence();
     }
 

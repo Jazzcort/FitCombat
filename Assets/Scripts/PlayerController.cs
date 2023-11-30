@@ -5,8 +5,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
 
-
-
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : NetworkBehaviour
 {
@@ -104,47 +102,40 @@ public class PlayerController : NetworkBehaviour
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        jumpButton.onClick.AddListener(() =>
-        {
-            jump();
-            Debug.Log(animator);
+        // rb = GetComponent<Rigidbody2D>();
+        // animator = GetComponent<Animator>();
+        // jumpButton.onClick.AddListener(() =>
+        // {
+        //     jump();
+        //     Debug.Log(animator);
 
-        });
-        Debug.Log(stick);
+        // });
+        // Debug.Log(stick);
     }
 
     public override void OnNetworkSpawn()
     {
-        
+        if (IsOwner)
+        {
+            jumpButton = GameObject.FindWithTag("JumpButton").GetComponent<Button>();
+            attackButton = GameObject.FindWithTag("AttackButton").GetComponent<Button>();
+            stick = FindObjectOfType<FixedJoystick>();
+
+            jumpButton.onClick.AddListener(() =>
+            {
+                jump();
+
+            });
+            attackButton.onClick.AddListener(() =>
+            {
+                attack();
+
+            });
+
+        }
+
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        jumpButton = GameObject.FindWithTag("JumpButton").GetComponent<Button>();
-        attackButton = GameObject.FindWithTag("AttackButton").GetComponent<Button>();
-        stick = FindObjectOfType<FixedJoystick>();
-        
-        jumpButton.onClick.AddListener(() =>
-        {
-            jump();
-            Debug.Log(animator);
-            
-
-        });
-        attackButton.onClick.AddListener(() =>
-        {
-            attack();
-            Debug.Log(animator);
-            
-
-        });
-
-        Debug.Log(stick.GetType());
-        Debug.Log(attackButton.GetType());
-        Debug.Log(animator);
-        Debug.Log(GameObject.FindWithTag("AttackButton"));
-
-    
 
     }
 
@@ -191,44 +182,55 @@ public class PlayerController : NetworkBehaviour
     {
 
 
+
     }
 
     private void FixedUpdate()
     {
-        float x_v;
-        if (stick.Horizontal > 0.2f)
+        if (IsOwner)
         {
-            x_v = 1.0f;
-            if (stick.Horizontal > 0.8f)
+            float x_v;
+            if (stick.Horizontal > 0.2f)
             {
-                IsRunning = true;
+                x_v = 1.0f;
+                if (stick.Horizontal > 0.8f)
+                {
+                    IsRunning = true;
+
+                }
+                else
+                {
+                    IsRunning = false;
+
+                }
+            }
+            else if (stick.Horizontal < -0.2f)
+            {
+                x_v = -1.0f;
+                if (stick.Horizontal < -0.8f)
+                {
+                    IsRunning = true;
+
+                }
+                else
+                {
+                    IsRunning = false;
+
+                }
             }
             else
             {
-                IsRunning = false;
+                x_v = 0;
             }
-        }
-        else if (stick.Horizontal < -0.2f)
-        {
-            x_v = -1.0f;
-            if (stick.Horizontal < -0.8f)
-            {
-                IsRunning = true;
-            }
-            else
-            {
-                IsRunning = false;
-            }
-        }
-        else
-        {
-            x_v = 0;
+
+            rb.velocity = new Vector2(x_v * CurrentMoveSpeed, rb.velocity.y);
+            IsMoving = x_v != 0;
+            SetFacingDirection(stick.Horizontal);
+            SetFacingDirectionServerRpc(stick.Horizontal);
+            animator.SetFloat(AnimationStrings.yVelocity, rb.velocity.y);
+
         }
 
-        rb.velocity = new Vector2(x_v * CurrentMoveSpeed, rb.velocity.y);
-        IsMoving = x_v != 0;
-        SetFacingDirection(stick.Horizontal);
-        animator.SetFloat(AnimationStrings.yVelocity, rb.velocity.y);
 
     }
 
@@ -249,6 +251,46 @@ public class PlayerController : NetworkBehaviour
             // Face the left
             IsFacingRight = false;
         }
+    }
+
+    [ServerRpc]
+    private void SetFacingDirectionServerRpc(float x_movement)
+    {
+        if (x_movement > 0 && !IsFacingRight)
+        {
+
+            // Face the right
+            IsFacingRight = true;
+
+        }
+        else if (x_movement < 0 && IsFacingRight)
+        {
+
+            // Face the left
+            IsFacingRight = false;
+        }
+
+        SetFacingDirectionClientRpc(x_movement);
+
+    }
+
+    [ClientRpc]
+    private void SetFacingDirectionClientRpc(float x_movement)
+    {
+        if (x_movement > 0 && !IsFacingRight)
+        {
+
+            // Face the right
+            IsFacingRight = true;
+
+        }
+        else if (x_movement < 0 && IsFacingRight)
+        {
+
+            // Face the left
+            IsFacingRight = false;
+        }
+
     }
 
     public void jump()
