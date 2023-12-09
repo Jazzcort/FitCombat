@@ -9,6 +9,10 @@ Library: /Users/chih-taolee/Unity Game/FitCombat/Temp/BurstOutput/tempburstlibs/
 --target-framework=NetFramework
 --assembly-defines=Assembly-CSharp;
 --assembly-defines=Cinemachine;
+--assembly-defines=Firebase.App;
+--assembly-defines=Firebase.Database;
+--assembly-defines=Firebase.Platform;
+--assembly-defines=Google.MiniJson;
 --assembly-defines=Mono.Security;
 --assembly-defines=mscorlib;
 --assembly-defines=Newtonsoft.Json;

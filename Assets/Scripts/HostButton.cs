@@ -15,9 +15,8 @@ public class HostButton : MonoBehaviour
             manager.selecting(UIManagerSelect.State.Waiting);
             SceneChanger.host();
             var jCode = await RelayManager.instance.StartHostWithRelay();
+            CharacterStatus.onGeneratedRoomcode?.Invoke(jCode);
             Debug.Log(jCode);
-
-            
             
         });
         

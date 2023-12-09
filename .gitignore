@@ -63,6 +63,9 @@ sysinfo.txt
 
 .DS_Store
 androidBuild/
+Assets/Plugins
+Assets/Firebase
+Assets/Firebase.meta
 
 # Crashlytics generated file
 crashlytics-build.properties

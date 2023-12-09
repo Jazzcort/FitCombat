@@ -14,11 +14,9 @@ public class PlayerController : NetworkBehaviour
     public float runSpeed = 8f;
     public float airWalkSpeed = 3;
     public float jumpImplus = 10f;
-    Vector2 moveInput;
     public Joystick stick;
     public Button jumpButton;
     public Button attackButton;
-
 
     public float CurrentMoveSpeed
     {
@@ -95,6 +93,7 @@ public class PlayerController : NetworkBehaviour
         private set { }
     }
 
+
     Rigidbody2D rb;
 
     [SerializeField]
@@ -132,12 +131,36 @@ public class PlayerController : NetworkBehaviour
 
             });
 
+            // GameManager.onGameStateChanged += GameStateChangedButton;
+            // GameManager.onGameStateChanged += GameStateChangedCallback;
+
         }
 
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
 
     }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        // GameManager.onGameStateChanged -= GameStateChangedButton;
+        // GameManager.onGameStateChanged += GameStateChangedCallback;
+    }
+
+    // private void GameStateChangedButton(GameManager.State gameState)
+    // {
+    //     if (gameState == GameManager.State.Waiting)
+    //     {
+    //         jumpButton.enabled = false;
+    //         attackButton.enabled = false;
+    //     }
+    //     else
+    //     {
+    //         jumpButton.enabled = true;
+    //         attackButton.enabled = true;
+    //     }
+    // }
 
     public bool IsMoving
     {
@@ -152,7 +175,18 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    public bool LockVelocity
+    {
+        get
+        {
+            return animator.GetBool(AnimationStrings.lockVelocity);
+        }
 
+        private set
+        {
+            animator.SetBool(AnimationStrings.lockVelocity, value);
+        }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -176,7 +210,19 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    // private bool isWaiting = true;
 
+    // private void GameStateChangedCallback(GameManager.State gameState)
+    // {
+    //     if (gameState == GameManager.State.Waiting)
+    //     {
+    //         isWaiting = true;
+    //     }
+    //     else
+    //     {
+    //         isWaiting = false;
+    //     }
+    // }
 
     void Update()
     {
@@ -223,10 +269,13 @@ public class PlayerController : NetworkBehaviour
                 x_v = 0;
             }
 
-            rb.velocity = new Vector2(x_v * CurrentMoveSpeed, rb.velocity.y);
+            if (!LockVelocity)
+            {
+                rb.velocity = new Vector2(x_v * CurrentMoveSpeed, rb.velocity.y);
+            }
+
             IsMoving = x_v != 0;
             SetFacingDirection(stick.Horizontal);
-            SetFacingDirectionServerRpc(stick.Horizontal);
             animator.SetFloat(AnimationStrings.yVelocity, rb.velocity.y);
 
         }
@@ -238,6 +287,11 @@ public class PlayerController : NetworkBehaviour
 
     private void SetFacingDirection(float x_movement)
     {
+        if (!animator.GetBool(AnimationStrings.isAlive))
+        {
+            return;
+        }
+
         if (x_movement > 0 && !IsFacingRight)
         {
 
@@ -251,6 +305,8 @@ public class PlayerController : NetworkBehaviour
             // Face the left
             IsFacingRight = false;
         }
+
+        SetFacingDirectionServerRpc(x_movement);
     }
 
     [ServerRpc]
@@ -309,6 +365,16 @@ public class PlayerController : NetworkBehaviour
     {
 
         animator.SetTrigger(AnimationStrings.attack);
+
+    }
+
+    public void OnHit(float damage, Vector2 knockback)
+    {
+        if (IsOwner)
+        {
+            LockVelocity = true;
+            rb.velocity = new Vector2(knockback.x, rb.velocity.y + knockback.y);
+        }
 
     }
 
